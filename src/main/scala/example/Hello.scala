@@ -1,13 +1,13 @@
 package example
 
-object Hello extends Greeting with App {
-  println(greeting)
+@main def hello (to: String, msgs: String*) =
+  val msg = msgs.headOption.getOrElse (null)
 
-  println (greet ("yo", "hola"))
-  println (greet ("me"))
-}
+  import Greeting._
 
-trait Greeting:
+  println (greet ("yo", msg))
+
+object Greeting:
   lazy val greeting: String = "hello"
 
   def greet (to: String, msg: String | Null = null): String = 
