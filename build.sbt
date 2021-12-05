@@ -5,13 +5,16 @@ ThisBuild / version          := "0.1.0-SNAPSHOT"
 ThisBuild / organization     := "cl.fbd"
 ThisBuild / organizationName := "fbd"
 
-// sea http://www.gibbons.org.uk/scala3-fs2-july-2021
+val http4sVersion = "0.23.0"
+
+// see http://www.gibbons.org.uk/scala3-fs2-july-2021
+
 lazy val root = (project in file("."))
   .settings(
     name := "HelloFS2",
-    libraryDependencies += "co.fs2" % "fs2-core_2.13" % "3.0.6",
-    libraryDependencies += "co.fs2" % "fs2-io_2.13" % "3.0.6",
-    libraryDependencies += "co.fs2" % "fs2-reactive-streams_2.13" % "3.0.6",
+
+    libraryDependencies += "org.http4s" %% "http4s-dsl" % http4sVersion,
+    libraryDependencies += "org.http4s" %% "http4s-blaze-client" % http4sVersion,
 
     libraryDependencies += scalaTest % Test
   )
