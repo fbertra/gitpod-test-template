@@ -19,6 +19,7 @@ lazy val root = (project in file("."))
     libraryDependencies += "org.http4s" %% "http4s-circe" % http4sVersion,
 
     libraryDependencies += "io.circe"   %% "circe-generic" % circeVersion,
+    libraryDependencies += "io.circe"   %% "circe-parser" % circeVersion,
 
     libraryDependencies += scalaTest % Test
   )

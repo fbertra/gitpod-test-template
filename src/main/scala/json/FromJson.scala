@@ -2,7 +2,7 @@ package cl.fbd.json
 
 import io.circe.{Encoder, Decoder}
 import cats.effect.kernel.Concurrent
-import io.circe._, io.circe.generic.semiauto._
+import io.circe._, io.circe.generic.semiauto.deriveDecoder
 import org.http4s.EntityDecoder
 import org.http4s.client._
 import org.http4s.circe.jsonOf
