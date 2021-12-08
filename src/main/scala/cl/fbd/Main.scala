@@ -1,6 +1,6 @@
 package cl.fbd
 
-import cats.effect.{IO, SyncIO}
+import cats.effect.{IO, IOApp, SyncIO}
 import cats.effect.unsafe.IORuntime
 
 import scala.concurrent.ExecutionContext.global
@@ -14,15 +14,16 @@ import cl.fbd.json.FromJson._
 
 // see https://github.com/PendaRed/scala3-fs2/blob/main/src/main/scala/com/jgibbons/fs2/a
 
-val pokemonApiURL = "https://pokeapi.co/api/v2/pokemon?limit=5"
+object HttpClient extends IOApp.Simple {
+  val pokemonApiURL = "https://pokeapi.co/api/v2/pokemon?limit=5"
 
-@main def httpClient () =
-  val x = BlazeClientBuilder[IO](scala.concurrent.ExecutionContext.global).resource.use { client =>
+  def run = {
+    BlazeClientBuilder[IO](scala.concurrent.ExecutionContext.global).resource.use { client =>
       client.expect[PokemonSvc](pokemonApiURL)
-    }
-    .map (pokemonSvc => 
-      println (pokemonSvc.toString ())
-      pokemonSvc
-    )
-
-  x.unsafeRunSync () (cats.effect.unsafe.IORuntime.global)
+        .map (pokemonSvc => {
+          println (pokemonSvc.toString ())
+          pokemonSvc
+        })
+      }
+  }
+}
