@@ -8,6 +8,6 @@ final case class PokemonData (
 final case class PokemonSvc (
   count: Integer,
   next: Option [String],
-  previous: Option [String]
-  // results: Seq [PokemonData]
+  previous: Option [String],
+  results: Seq [PokemonData]
 )
