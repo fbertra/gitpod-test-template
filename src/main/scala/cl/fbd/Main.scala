@@ -17,7 +17,7 @@ import cl.fbd.domain.PokemonAblility
 // see https://github.com/PendaRed/scala3-fs2/blob/main/src/main/scala/com/jgibbons/fs2/a
 
 object HttpClient extends IOApp.Simple {
-  val pokemonApiURL = "https://pokeapi.co/api/v2/pokemon?limit=5"
+  val pokemonApiURL = "https://pokeapi.co/api/v2/pokemon?limit="
   val pokemonAbilityURL = "https://pokeapi.co/api/v2/ability/"
 
   def callPokemonAbility (client: Client [IO], data: PokemonData): IO [Unit] = {
@@ -30,22 +30,30 @@ object HttpClient extends IOApp.Simple {
     expectedAbility.flatMap (ability => IO (println (ability.toString ())))
   }
 
+  def callPokemonSvc (client: Client [IO], limit: Int): IO[PokemonSvc] = {
+    val expectedSvc = client.expect[PokemonSvc](pokemonApiURL + limit)
+
+    expectedSvc.flatMap (pokemonSvc => {
+       val log = IO (println (pokemonSvc.toString ()))
+       log *> IO.pure (pokemonSvc)
+    })
+  }
+
+  def callServices (client: Client [IO]) = {
+    val ioPokemonSvc = callPokemonSvc (client, 10)
+
+    ioPokemonSvc.flatMap (pokemonSvc => {
+        val res = for (pokemonData <- pokemonSvc.results) yield {
+          callPokemonAbility (client, pokemonData)
+        }
+
+        res.sequence.map(_ => ())
+      })
+  }
+
   def run = {    
     val builder = BlazeClientBuilder[IO](scala.concurrent.ExecutionContext.global)
     
-    builder.resource.use { client => {
-        val expectedSvc = client.expect[PokemonSvc](pokemonApiURL)
-
-        expectedSvc.flatMap (pokemonSvc => {
-            val logSvc = IO (println (pokemonSvc.toString ()))
-
-            val res = for (pokemonData <- pokemonSvc.results) yield {
-              callPokemonAbility (client, pokemonData)
-            }
-
-            logSvc *> res.sequence.map(_ => ())
-          })
-      }
-    }
+    builder.resource.use { client => callServices(client) }
   }
 }
