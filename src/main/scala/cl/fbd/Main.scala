@@ -20,35 +20,38 @@ object HttpClient extends IOApp.Simple {
   val pokemonApiURL = "https://pokeapi.co/api/v2/pokemon?limit="
   val pokemonAbilityURL = "https://pokeapi.co/api/v2/ability/"
 
-  def callPokemonAbility (client: Client [IO], data: PokemonData): IO [Unit] = {
-    val urlSpiitted = data.url.split ("/")
+  def callPokemonAbility (client: Client [IO], data: PokemonData): IO [PokemonAblility] = {
+    val urlSplitted = data.url.split ("/")
 
-    val id = urlSpiitted (urlSpiitted.length - 1)
+    val id = urlSplitted (urlSplitted.length - 1)
 
-    val expectedAbility = client.expect[PokemonAblility](pokemonAbilityURL + id)
-
-    expectedAbility.flatMap (ability => IO (println (ability.toString ())))
+    client.expect[PokemonAblility](pokemonAbilityURL + id)
   }
 
-  def callPokemonSvc (client: Client [IO], limit: Int): IO[PokemonSvc] = {
-    val expectedSvc = client.expect[PokemonSvc](pokemonApiURL + limit)
+  def logPokemonAbility (ability: PokemonAblility): IO [Unit] = IO (println (ability.toString ()))
 
-    expectedSvc.flatMap (pokemonSvc => {
-       val log = IO (println (pokemonSvc.toString ()))
-       log *> IO.pure (pokemonSvc)
-    })
-  }
+  def callPokemonSvc (client: Client [IO], limit: Int): IO[PokemonSvc] = client.expect[PokemonSvc](pokemonApiURL + limit)
+
+  def logPokemonSvc (pokemonSvc: PokemonSvc): IO [PokemonSvc] = IO (println (pokemonSvc.toString ())) *>  IO.pure (pokemonSvc)
 
   def callServices (client: Client [IO]) = {
     val ioPokemonSvc = callPokemonSvc (client, 10)
 
-    ioPokemonSvc.flatMap (pokemonSvc => {
+    val ret = ioPokemonSvc
+      .flatMap (logPokemonSvc _)
+      .flatMap (pokemonSvc => {
         val res = for (pokemonData <- pokemonSvc.results) yield {
-          callPokemonAbility (client, pokemonData)
-        }
+            val ioPokemonAbility = callPokemonAbility (client, pokemonData)
 
-        res.sequence.map(_ => ())
+            val log = ioPokemonAbility.flatMap (logPokemonAbility _)
+
+            log *> ioPokemonAbility
+          }
+          
+        res.sequence.map (_ => ())
       })
+
+    ret
   }
 
   def run = {    
