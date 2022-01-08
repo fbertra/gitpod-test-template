@@ -11,34 +11,21 @@ import org.http4s.blaze.client.BlazeClientBuilder
 import org.http4s.client.Client
 
 import cl.fbd.domain.{PokemonSvc, PokemonData}
-import cl.fbd.json.FromJson._
 import cl.fbd.domain.PokemonAblility
 
-// see https://github.com/PendaRed/scala3-fs2/blob/main/src/main/scala/com/jgibbons/fs2/a
+import cl.fbd.httpclient.PokemonApiClient
 
-object HttpClient extends IOApp.Simple {
-  val pokemonApiURL = "https://pokeapi.co/api/v2/pokemon?limit="
-  val pokemonAbilityURL = "https://pokeapi.co/api/v2/ability/"
-
-  def callPokemonAbility (client: Client [IO], data: PokemonData): IO [PokemonAblility] = {
-    val urlSplitted = data.url.split ("/")
-
-    val id = urlSplitted (urlSplitted.length - 1)
-
-    client.expect[PokemonAblility](pokemonAbilityURL + id)
-  }
+object YetAnotherPokemonApiClient extends IOApp.Simple {
+  import PokemonApiClient._
 
   def logPokemonAbility (ability: PokemonAblility): IO [Unit] = IO (println (ability.toString ()))
-
-  def callPokemonSvc (client: Client [IO], limit: Int): IO[PokemonSvc] = client.expect[PokemonSvc](pokemonApiURL + limit)
-
-  def logPokemonSvc (pokemonSvc: PokemonSvc): IO [PokemonSvc] = IO (println (pokemonSvc.toString ())) *>  IO.pure (pokemonSvc)
+  def logPokemonSvc (pokemonSvc: PokemonSvc): IO [Unit] = IO (println (pokemonSvc.toString ()))
 
   def callServices (client: Client [IO]) = {
     val ioPokemonSvc = callPokemonSvc (client, 10)
 
     val ret = ioPokemonSvc
-      .flatMap (logPokemonSvc _)
+      .flatMap (pokemonSvc => logPokemonSvc (pokemonSvc) *> IO.pure (pokemonSvc))
       .flatMap (pokemonSvc => {
         val res = for (pokemonData <- pokemonSvc.results) yield {
             val ioPokemonAbility = callPokemonAbility (client, pokemonData)
